@@ -1,0 +1,15 @@
+# render.yaml (Save this file in the root of your GitHub repository)
+services:
+  - type: web
+    name: e-commerce-apis
+    env: java
+    region: singapore # Change this to your desired region (e.g., oregon, frankfurt)
+    plan: free
+    buildCommand: "./mvnw clean install -DskipTests" # Use the Maven Wrapper
+    startCommand: "java -jar target/*.jar"
+    autoDeploy: true
+    # Add any required environment variables here:
+    envVars:
+      - key: JWT_SECRET
+        value: your_secret_key_here
+      # Add other spring.datasource.* and mail variables here...

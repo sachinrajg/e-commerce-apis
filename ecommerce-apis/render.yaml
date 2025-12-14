@@ -1,0 +1,23 @@
+# render.yaml (Final version for Docker deployment)
+services:
+  - type: web
+    name: e-commerce-apis
+    runtime: docker # ⬅️ Set the runtime to 'docker'
+    region: singapore
+    plan: free
+    
+    # We remove buildCommand and startCommand because they are now defined inside the Dockerfile
+    # Render will automatically look for the Dockerfile and build it.
+    
+    autoDeploy: true
+    
+    # The port your application exposes (must match EXPOSE 8080 in the Dockerfile)
+    port: 8080 
+    
+    envVars:
+      - key: JAVA_VERSION
+        value: "17"
+      # Add all other required environment variables here:
+      - key: JWT_SECRET
+        value: your_secret_key_here
+      # ... other SPRING_DATASOURCE and SPRING_MAIL variables

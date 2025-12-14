@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: e-commerce-apis
+    runtime: docker
+    region: singapore
+    plan: free
+    autoDeploy: true
+    
+    port: 8080 
+    
+    envVars:
+      - key: JAVA_VERSION
+        value: "17"

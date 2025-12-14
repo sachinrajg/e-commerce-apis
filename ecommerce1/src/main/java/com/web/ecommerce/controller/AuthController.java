@@ -15,15 +15,21 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.web.ecommerce.model.JwtRequest;
 import com.web.ecommerce.model.JwtResponse;
-import com.web.ecommerce.model.User.Role;
+// import com.web.ecommerce.model.User.Role;
 import com.web.ecommerce.model.UserRegistrationRequest;
 import com.web.ecommerce.service.JwtUserDetailsService;
 import com.web.ecommerce.service.UserService;
 import com.web.ecommerce.util.JwtTokenUtil;
+import org.slf4j.Logger; import org.slf4j.LoggerFactory;
+import com.web.ecommerce.model.User;
+
+
+
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*")
 public class AuthController {
+    private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -40,11 +46,12 @@ public class AuthController {
     @PostMapping("/authenticate")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) throws Exception {
         authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
+        final User user = userDetailsService.getUserDetails(authenticationRequest.getUsername());
+        final int role_id = user.getRoleId();
         final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
         final String role = userDetails.getAuthorities().iterator().next().getAuthority(); // Extract role
         final Long userId = userDetailsService.getUserIdByUsername(authenticationRequest.getUsername()); // Retrieve userId
-        final Long role_id = userDetailsService.getUserIdByUsername()
-        final String token = jwtTokenUtil.generateToken(userDetails.getUsername(), role, userId, role_id); // Generate token with role and userId
+        final String token = jwtTokenUtil.generateToken(userDetails.getUsername(), userId, role_id); // Generate token with role and userId
         return ResponseEntity.ok(new JwtResponse(token));
     }
 
@@ -59,21 +66,21 @@ public class AuthController {
 
     @PostMapping("/admin/register")
     public ResponseEntity<?> registerAdmin(@RequestBody UserRegistrationRequest registrationRequest) {
-        registrationRequest.setRole(Role.ADMIN);
+        registrationRequest.setRoleId(1);
         userService.registerUser(registrationRequest);
         return ResponseEntity.ok("Admin registered successfully");
     }
 
     @PostMapping("/buyer/register")
     public ResponseEntity<?> registerBuyer(@RequestBody UserRegistrationRequest registrationRequest) {
-        registrationRequest.setRole(Role.BUYER);
+        // registrationRequest.setRole(R);
         userService.registerUser(registrationRequest);
         return ResponseEntity.ok("Buyer registered successfully");
     }
 
     @PostMapping("/seller/register")
     public ResponseEntity<?> registerSeller(@RequestBody UserRegistrationRequest registrationRequest) {
-        registrationRequest.setRole(Role.SELLER);
+        // registrationRequest.setRole(Role.SELLER);
         userService.registerUser(registrationRequest);
         return ResponseEntity.ok("Seller registered successfully");
     }

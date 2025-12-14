@@ -43,7 +43,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         // Bypass JWT processing for Swagger UI & API docs
         String requestURI = request.getRequestURI();
-        if (requestURI.startsWith("/swagger-ui/") || requestURI.startsWith("/v3/api-docs")  || requestURI.startsWith("/buyer/products")){
+        if (requestURI.startsWith("/swagger-ui/") || requestURI.startsWith("/v3/api-docs")  || requestURI.startsWith("/authenticate") || requestURI.startsWith("/buyer/products")){
+            logger.info(" Request : {}", requestURI);
             chain.doFilter(request, response);
             return;
         }
@@ -55,11 +56,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             try {
                 Claims claims = jwtTokenUtil.getAllClaimsFromToken(jwt);
                 String username = claims.getSubject();
-                String role = claims.get("role", String.class);
+                Object roleIdObject = claims.get("role_id");
+                Integer roleIdInt = (Integer) roleIdObject; 
+                String role_id = String.valueOf(roleIdInt);
 
                 logger.info("JWT Token: {}", jwt);
                 logger.info("Username from JWT: {}", username);
-                logger.info("Role from JWT: {}", role);
+                logger.info("Role from JWT: {}", role_id);
 
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);

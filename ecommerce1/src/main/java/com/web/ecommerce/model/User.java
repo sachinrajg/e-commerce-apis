@@ -20,17 +20,18 @@ public class User {
     private String username;
     private String password;
 
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    // @Enumerated(EnumType.STRING)
+    // private Role role;
+
+    private int role_id;
 
     public User() {
-        // Default constructor needed by JPA
     }
 
-    public User(String username, String password, Role role) {
+    public User(String username, String password, int role) {
         this.username = username;
         this.password = password;
-        this.role = role;
+        this.role_id = role_id;
     }
 
     // Getters and setters
@@ -58,15 +59,23 @@ public class User {
         this.password = password;
     }
 
-    public Role getRole() {
-        return role;
+    // public Role getRole() {
+    //     return role;
+    // }
+
+    // public void setRole(Role role) {
+    //     this.role = role;
+    // }
+
+    // public enum Role {
+    //     ADMIN, BUYER, SELLER;
+    // }
+
+    public void setRoleId(int role_id){
+        this.role_id=role_id;
     }
 
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public enum Role {
-        ADMIN, BUYER, SELLER;
+    public int getRoleId(){
+        return role_id;
     }
 }

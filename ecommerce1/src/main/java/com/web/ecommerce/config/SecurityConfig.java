@@ -41,17 +41,17 @@ public class SecurityConfig {
                 .antMatchers(HttpMethod.POST, "/authenticate", "/seller/register", "/buyer/register").permitAll()
 
                 // Seller role-based permissions
-                .antMatchers(HttpMethod.POST, "/seller/products/{id}", "/seller/products").hasRole("SELLER")
-                .antMatchers(HttpMethod.DELETE, "/seller/products/{id}").hasRole("SELLER")
-                .antMatchers(HttpMethod.GET, "/seller/productsview").hasRole("SELLER")
+                .antMatchers(HttpMethod.POST, "/seller/products/{id}", "/seller/products").hasRole("3")
+                .antMatchers(HttpMethod.DELETE, "/seller/products/{id}").hasRole("3")
+                .antMatchers(HttpMethod.GET, "/seller/productsview").hasRole("3")
 
                 // Buyer role-based permissions
-                .antMatchers(HttpMethod.GET, "/buyer/products", "/carts/update", "/userId").hasRole("BUYER")
-                .antMatchers(HttpMethod.PUT, "/buyer/products", "/carts/update").hasRole("BUYER")
-                .antMatchers(HttpMethod.POST, "/orders/place", "/cart/add").hasRole("BUYER")
+                .antMatchers(HttpMethod.GET, "/buyer/products", "/carts/update", "/userId").hasRole("2")
+                .antMatchers(HttpMethod.PUT, "/buyer/products", "/carts/update").hasRole("2")
+                .antMatchers(HttpMethod.POST, "/orders/place", "/cart/add").hasRole("2")
 
                 // Admin role-based permissions
-                .antMatchers(HttpMethod.GET, "/admin/products").hasRole("ADMIN")
+                .antMatchers(HttpMethod.GET, "/admin/products").hasRole("1")
 
                 // All other requests require authentication
                 .anyRequest().authenticated()

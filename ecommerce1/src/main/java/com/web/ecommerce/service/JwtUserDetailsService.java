@@ -25,7 +25,7 @@ public class JwtUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())); // Convert enum to String
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + String.valueOf(user.getRoleId())));
 
         return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), authorities);
     }
@@ -35,6 +35,14 @@ public class JwtUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
         return user.getId();
+    }
+
+    public User getUserDetails(String username){
+        // Reuse the existing repository method to fetch the User object
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(()-> new UsernameNotFoundException("user not found with the username : "+username));
+            
+        return user; // Corrected return statement (just the variable name)
     }
 
 }

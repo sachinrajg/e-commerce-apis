@@ -32,9 +32,9 @@ public class JwtTokenUtil implements Serializable {
     }
 
     // Retrieve role from JWT token
-    public String getRoleFromToken(String token) {
-        return getClaimFromToken(token, claims -> claims.get("role", String.class));
-    }
+    // public String getRoleFromToken(String token) {
+    //     return getClaimFromToken(token, claims -> claims.get("role_id", String.class));
+    // }
 
     // Retrieve userId from JWT token
     public Long getUserIdFromToken(String token) {
@@ -58,10 +58,11 @@ public class JwtTokenUtil implements Serializable {
     }
 
     // Generate token for user with role and userId
-    public String generateToken(String username, Long userId, Integer role_id) {
+    public String generateToken(String username, Long userId, Integer role_id, Boolean status) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("role_id", role_id);
+        claims.put("status", status);
 
         return doGenerateToken(claims, username);
     }

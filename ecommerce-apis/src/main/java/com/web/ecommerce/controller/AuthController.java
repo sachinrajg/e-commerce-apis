@@ -22,6 +22,7 @@ import com.web.ecommerce.service.UserService;
 import com.web.ecommerce.util.JwtTokenUtil;
 import org.slf4j.Logger; import org.slf4j.LoggerFactory;
 import com.web.ecommerce.model.User;
+import java.util.Map;
 
 
 
@@ -47,11 +48,19 @@ public class AuthController {
     public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) throws Exception {
         authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
         final User user = userDetailsService.getUserDetails(authenticationRequest.getUsername());
+        if (user == null) {
+            throw new RuntimeException("Authenticated user entity not found in database."); 
+        }
+        logger.info("User is present {}", user);
         final int role_id = user.getRoleId();
+        final boolean status = user.getStatus();
+        logger.info("Status are : {}", status);
         final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
-        final String role = userDetails.getAuthorities().iterator().next().getAuthority(); // Extract role
+
+        // final String role = userDetails.getAuthorities().iterator().next().getAuthority(); // Extract role
         final Long userId = userDetailsService.getUserIdByUsername(authenticationRequest.getUsername()); // Retrieve userId
-        final String token = jwtTokenUtil.generateToken(userDetails.getUsername(), userId, role_id); // Generate token with role and userId
+        final String token = jwtTokenUtil.generateToken(userDetails.getUsername(), userId, role_id, status); // Generate token with role and userId
+        logger.info("DONE;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
         return ResponseEntity.ok(new JwtResponse(token));
     }
 
@@ -72,15 +81,17 @@ public class AuthController {
     }
 
     @PostMapping("/buyer/register")
-    public ResponseEntity<?> registerBuyer(@RequestBody UserRegistrationRequest registrationRequest) {
-        // registrationRequest.setRole(R);
+    public ResponseEntity<Map> registerBuyer(@RequestBody UserRegistrationRequest registrationRequest) {
         userService.registerUser(registrationRequest);
-        return ResponseEntity.ok("Buyer registered successfully");
+        Map<String, Object> responseMap = Map.of(
+            "status",true,
+            "message","User created successfully."
+        );
+        return ResponseEntity.ok(responseMap);
     }
 
     @PostMapping("/seller/register")
     public ResponseEntity<?> registerSeller(@RequestBody UserRegistrationRequest registrationRequest) {
-        // registrationRequest.setRole(Role.SELLER);
         userService.registerUser(registrationRequest);
         return ResponseEntity.ok("Seller registered successfully");
     }

@@ -1,7 +1,7 @@
 services:
   - type: web
     name: e-commerce-apis
-    runtime: java
+    runtime: openjdk
     region: singapore
     plan: free
     rootDir: ecommerce-apis

@@ -4,33 +4,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.web.ecommerce.model.JwtRequest;
-import com.web.ecommerce.model.JwtResponse;
-// import com.web.ecommerce.model.User.Role;
-import com.web.ecommerce.model.UserRegistrationRequest;
-import com.web.ecommerce.service.JwtUserDetailsService;
-import com.web.ecommerce.service.UserService;
+import org.springframework.web.bind.annotation.*;
+import com.web.ecommerce.model.*;
+import com.web.ecommerce.service.*;
 import com.web.ecommerce.util.JwtTokenUtil;
-import org.slf4j.Logger; import org.slf4j.LoggerFactory;
-import com.web.ecommerce.model.User;
 import java.util.Map;
-
-
-
 
 @RestController
 @CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*")
 public class AuthController {
-    private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -45,58 +28,34 @@ public class AuthController {
     private UserService userService;
 
     @PostMapping("/authenticate")
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) throws Exception {
-        authenticate(authenticationRequest.getUsername(), authenticationRequest.getPassword());
-        final User user = userDetailsService.getUserDetails(authenticationRequest.getUsername());
-        if (user == null) {
-            throw new RuntimeException("Authenticated user entity not found in database."); 
-        }
-        logger.info("User is present {}", user);
-        final int role_id = user.getRoleId();
-        final boolean status = user.getStatus();
-        logger.info("Status are : {}", status);
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
-
-        // final String role = userDetails.getAuthorities().iterator().next().getAuthority(); // Extract role
-        final Long userId = userDetailsService.getUserIdByUsername(authenticationRequest.getUsername()); // Retrieve userId
-        final String token = jwtTokenUtil.generateToken(userDetails.getUsername(), userId, role_id, status); // Generate token with role and userId
-        logger.info("DONE;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;");
+    public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtRequest authRequest) throws Exception {
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
+        
+        final User user = userDetailsService.getUserDetails(authRequest.getUsername());
+        final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getUsername());
+        
+        final String token = jwtTokenUtil.generateToken(userDetails.getUsername(), user.getId(), user.getRoleId(), user.getStatus());
         return ResponseEntity.ok(new JwtResponse(token));
     }
 
-
-    @GetMapping("/userId")
-    public ResponseEntity<Long> getUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        Long userId = userDetailsService.getUserIdByUsername(username);
-        return ResponseEntity.ok(userId);
+    @PostMapping("/register/admin")
+    public ResponseEntity<?> regAdmin(@RequestBody UserRegistrationRequest r) {
+        r.setRoleId(1);
+        userService.registerUser(r);
+        return ResponseEntity.ok(Map.of("status", true, "message", "Admin registered"));
     }
 
-    @PostMapping("/admin/register")
-    public ResponseEntity<?> registerAdmin(@RequestBody UserRegistrationRequest registrationRequest) {
-        registrationRequest.setRoleId(1);
-        userService.registerUser(registrationRequest);
-        return ResponseEntity.ok("Admin registered successfully");
+    @PostMapping("/register/seller")
+    public ResponseEntity<?> regSeller(@RequestBody UserRegistrationRequest r) {
+        r.setRoleId(2);
+        userService.registerUser(r);
+        return ResponseEntity.ok(Map.of("status", true, "message", "Seller registered"));
     }
 
-    @PostMapping("/buyer/register")
-    public ResponseEntity<Map> registerBuyer(@RequestBody UserRegistrationRequest registrationRequest) {
-        userService.registerUser(registrationRequest);
-        Map<String, Object> responseMap = Map.of(
-            "status",true,
-            "message","User created successfully."
-        );
-        return ResponseEntity.ok(responseMap);
-    }
-
-    @PostMapping("/seller/register")
-    public ResponseEntity<?> registerSeller(@RequestBody UserRegistrationRequest registrationRequest) {
-        userService.registerUser(registrationRequest);
-        return ResponseEntity.ok("Seller registered successfully");
-    }
-
-    private void authenticate(String username, String password) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+    @PostMapping("/register/buyer")
+    public ResponseEntity<?> regBuyer(@RequestBody UserRegistrationRequest r) {
+        r.setRoleId(3);
+        userService.registerUser(r);
+        return ResponseEntity.ok(Map.of("status", true, "message", "Buyer registered"));
     }
 }

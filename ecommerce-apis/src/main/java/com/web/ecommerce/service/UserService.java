@@ -24,6 +24,11 @@ public class UserService {
         user.setUsername(registrationRequest.getUsername());
         user.setPassword(passwordEncoder.encode(registrationRequest.getPassword()));
         user.setRoleId(registrationRequest.getRoleId());
+        if (registrationRequest.getStatus() != null) {
+        user.setStatus(registrationRequest.getStatus());
+        } else {
+            user.setStatus(true);
+        }
         userRepository.save(user);
     }
 

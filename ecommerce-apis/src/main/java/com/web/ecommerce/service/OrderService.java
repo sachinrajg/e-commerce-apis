@@ -1,58 +1,46 @@
 package com.web.ecommerce.service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import com.web.ecommerce.model.Order;
-import com.web.ecommerce.model.Product;
-import com.web.ecommerce.repository.OrderRepository;
-import com.web.ecommerce.repository.ProductRepository;
+import org.springframework.transaction.annotation.Transactional;
+import com.web.ecommerce.model.*;
+import com.web.ecommerce.repository.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class OrderService {
 
     @Autowired
     private OrderRepository orderRepository;
-
+    
     @Autowired
-    private ProductRepository productRepository;
+    private CartService cartService;
 
-    public Order placeOrder(Long userId, Long productId, String userMobileNumber, String userAddress) {
-        Order order = new Order();
-        order.setUserId(userId);
-        order.setProductId(productId);
-        order.setUserMobileNumber(userMobileNumber);
-        order.setUserAddress(userAddress);
-        order.setStatus("PENDING");
-        return orderRepository.save(order);
-    }
-
-    public List<Order> getUserOrders(Long userId) {
-        return orderRepository.findByUserId(userId);
-    }
-
-    public List<Order> getSellerOrders(Long sellerId) {
-        List<Product> products = productRepository.findByUserId(sellerId);
-        List<Long> productIds = products.stream().map(Product::getProductId).collect(Collectors.toList());
-        return orderRepository.findByProductIdIn(productIds);
-    }
-
-    public Order changeOrderStatus(Long orderId, String status) {
-        Optional<Order> optionalOrder = orderRepository.findById(orderId);
-        if (optionalOrder.isPresent()) {
-            Order order = optionalOrder.get();
-            order.setStatus(status);
-            return orderRepository.save(order);
-        } else {
-            throw new RuntimeException("Order not found");
+    @Transactional
+    public List<Order> processCheckout(Long userId, List<OrderRequest> orderRequests) {
+        List<Order> placedOrders = new ArrayList<>();
+        
+        for (OrderRequest request : orderRequests) {
+            Order order = new Order();
+            order.setUserId(userId);
+            order.setProductId(request.getProductId());
+            order.setUserMobileNumber(request.getUserMobileNumber());
+            order.setUserAddress(request.getUserAddress());
+            order.setStatus("PLACED_COD");
+            
+            placedOrders.add(orderRepository.save(order));
         }
+        
+        cartService.clearCart(userId);
+        return placedOrders;
     }
 
-    public void cancelOrder(Long orderId) {
-        orderRepository.deleteById(orderId);
+    @Transactional
+    public Order updateTrackingStatus(Long orderId, String newStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+        order.setStatus(newStatus);
+        return orderRepository.save(order);
     }
 }

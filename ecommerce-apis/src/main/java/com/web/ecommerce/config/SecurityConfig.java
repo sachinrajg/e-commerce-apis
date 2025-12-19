@@ -12,20 +12,15 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
 import com.web.ecommerce.security.JwtRequestFilter;
 
 @Configuration
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    private final UserDetailsService userDetailsService;
-    private final PasswordEncoder passwordEncoder;
     private final JwtRequestFilter jwtRequestFilter;
 
     public SecurityConfig(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder, JwtRequestFilter jwtRequestFilter) {
-        this.userDetailsService = userDetailsService;
-        this.passwordEncoder = passwordEncoder;
         this.jwtRequestFilter = jwtRequestFilter;
     }
 
@@ -34,33 +29,22 @@ public class SecurityConfig {
         http
             .csrf().disable()
             .authorizeRequests()
-                // Allow OpenAPI (Swagger) endpoints
                 .antMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .antMatchers(HttpMethod.POST, "/authenticate", "/register/seller", "/register/buyer").permitAll()
+                .antMatchers(HttpMethod.GET, "/buyer/products").permitAll()
 
-                // Allow authentication and registration
-                .antMatchers(HttpMethod.POST, "/authenticate", "/seller/register", "/buyer/register").permitAll()
+                .antMatchers("/seller/**").hasRole("2")
 
-                // Seller role-based permissions
-                .antMatchers(HttpMethod.POST, "/seller/products/{id}", "/seller/products").hasRole("3")
-                .antMatchers(HttpMethod.DELETE, "/seller/products/{id}").hasRole("3")
-                .antMatchers(HttpMethod.GET, "/seller/productsview").hasRole("3")
+                .antMatchers("/cart/**", "/orders/**").hasRole("3")
+                .antMatchers("/admin/**", "/register/admin").hasRole("1")
 
-                // Buyer role-based permissions
-                .antMatchers(HttpMethod.GET, "/buyer/products", "/carts/update", "/userId").hasRole("2")
-                .antMatchers(HttpMethod.PUT, "/buyer/products", "/carts/update").hasRole("2")
-                .antMatchers(HttpMethod.POST, "/orders/place", "/cart/add").hasRole("2")
-
-                // Admin role-based permissions
-                .antMatchers(HttpMethod.GET, "/admin/products").hasRole("1")
-
-                // All other requests require authentication
                 .anyRequest().authenticated()
             .and()
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
-            .cors(); // Enable CORS
+            .cors(); 
 
-        // Add JWT filter before authentication
+        // Add JWT filter
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

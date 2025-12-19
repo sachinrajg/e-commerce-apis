@@ -1,7 +1,6 @@
 package com.web.ecommerce.security;
 
 import java.io.IOException;
-
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -17,7 +16,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import org.slf4j.Logger; import org.slf4j.LoggerFactory;
+import org.slf4j.Logger; 
+import org.slf4j.LoggerFactory;
 import com.web.ecommerce.util.JwtTokenUtil;
 
 import io.jsonwebtoken.Claims;
@@ -27,9 +27,6 @@ import io.jsonwebtoken.ExpiredJwtException;
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtRequestFilter.class);
-
-    @Value("${jwt.secret}")
-    private String secret;
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
@@ -41,13 +38,20 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        // Bypass JWT processing for Swagger UI & API docs
         String requestURI = request.getRequestURI();
-        if (requestURI.startsWith("/swagger-ui/") || requestURI.startsWith("/v3/api-docs")  || requestURI.startsWith("/authenticate") || requestURI.startsWith("/buyer/products")){
-            logger.info(" Request : {}", requestURI);
+
+        if (requestURI.startsWith("/swagger-ui/") || 
+            requestURI.startsWith("/v3/api-docs") || 
+            requestURI.startsWith("/authenticate") || 
+            requestURI.startsWith("/buyer/products") || 
+            requestURI.startsWith("/register/buyer") || 
+            requestURI.startsWith("/register/seller")) {
+            
+            logger.info("Bypassing JWT for request : {}", requestURI);
             chain.doFilter(request, response);
             return;
         }
+
 
         String authorizationHeader = request.getHeader("Authorization");
 
@@ -56,13 +60,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             try {
                 Claims claims = jwtTokenUtil.getAllClaimsFromToken(jwt);
                 String username = claims.getSubject();
-                Object roleIdObject = claims.get("role_id");
-                Integer roleIdInt = (Integer) roleIdObject; 
-                String role_id = String.valueOf(roleIdInt);
-
-                logger.info("JWT Token: {}", jwt);
-                logger.info("Username from JWT: {}", username);
-                logger.info("Role from JWT: {}", role_id);
 
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -73,8 +70,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                         logger.info("Authenticated user: {}", username);
-                    } else {
-                        logger.warn("JWT Token validation failed for user: {}", username);
                     }
                 }
             } catch (ExpiredJwtException e) {

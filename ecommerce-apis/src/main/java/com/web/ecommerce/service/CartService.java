@@ -1,12 +1,12 @@
-// CartService.java
 package com.web.ecommerce.service;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import com.web.ecommerce.model.Cart;
 import com.web.ecommerce.repository.CartRepository;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CartService {
@@ -14,23 +14,37 @@ public class CartService {
     @Autowired
     private CartRepository cartRepository;
 
-    public Cart addToCart(Cart cartItem) {
-        Cart existingCartItem = cartRepository.findByUserIdAndProductId(cartItem.getUserId(), cartItem.getProductId());
-        if (existingCartItem != null) {
-            existingCartItem.setQuantity(existingCartItem.getQuantity() + cartItem.getQuantity());
-            return cartRepository.save(existingCartItem);
+    @Transactional
+    public Cart addToCart(Long userId, Long productId, int quantity) {
+        Optional<Cart> existingCart = cartRepository.findByUserIdAndProductId(userId, productId);
+        
+        if (existingCart.isPresent()) {
+            Cart cart = existingCart.get();
+            cart.setQuantity(cart.getQuantity() + quantity);
+            return cartRepository.save(cart);
         } else {
-            return cartRepository.save(cartItem);
+            Cart newCart = new Cart();
+            newCart.setUserId(userId);
+            newCart.setProductId(productId);
+            newCart.setQuantity(quantity);
+            return cartRepository.save(newCart);
         }
     }
-
+    
     public List<Cart> getCartItemsByUserId(Long userId) {
         return cartRepository.findByUserId(userId);
     }
 
+    @Transactional
     public Cart updateCartQuantity(Long cartId, int quantity) {
-        Cart cartItem = cartRepository.findById(cartId).orElseThrow(() -> new RuntimeException("Cart item not found"));
-        cartItem.setQuantity(quantity);
-        return cartRepository.save(cartItem);
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> new IllegalArgumentException("Cart item not found with id: " + cartId));
+        cart.setQuantity(quantity);
+        return cartRepository.save(cart);
+    }
+    
+    @Transactional
+    public void clearCart(Long userId) {
+        cartRepository.deleteByUserId(userId);
     }
 }
